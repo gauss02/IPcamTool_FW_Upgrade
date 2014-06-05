@@ -1,8 +1,9 @@
-Dim IPAddr, oX, oX2, cmdTmp1, cmdTmp2, IsStart, DelayTime
-
+Dim IPAddr
 Dim FileName
 Dim FromPath
 Dim PortNo
+Dim UserName: UserName = "root"
+Dim Passwd  : Passwd   = "root"
 
 Function GetExt(fileName)
     Dim pos, m_name, xtn
@@ -26,6 +27,51 @@ Function GetLastPKGFile( path )
         End If
     Next
     GetLastPKGFile = recentFile
+End Function
+
+Function MyASC(OneChar)
+  If OneChar = "" Then MyASC = 0 Else MyASC = Asc(OneChar)
+End Function
+
+Function Base64Encode(inData)
+    'rfc1521
+    '2001 Antonin Foller, Motobit Software, http://Motobit.cz
+    Const Base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    Dim cOut, sOut, I
+
+    'For each group of 3 bytes
+    For I = 1 To Len(inData) Step 3
+        Dim nGroup, pOut, sGroup
+
+        'Create one long from this 3 bytes.
+        nGroup = &H10000 * Asc(Mid(inData, I, 1)) + _
+            &H100 * MyASC(Mid(inData, I + 1, 1)) + MyASC(Mid(inData, I + 2, 1))
+
+        'Oct splits the long To 8 groups with 3 bits
+        nGroup = Oct(nGroup)
+
+        'Add leading zeros
+        nGroup = String(8 - Len(nGroup), "0") & nGroup
+
+        'Convert To base64
+        pOut = Mid(Base64, CLng("&o" & Mid(nGroup, 1, 2)) + 1, 1) + _
+            Mid(Base64, CLng("&o" & Mid(nGroup, 3, 2)) + 1, 1) + _
+            Mid(Base64, CLng("&o" & Mid(nGroup, 5, 2)) + 1, 1) + _
+            Mid(Base64, CLng("&o" & Mid(nGroup, 7, 2)) + 1, 1)
+
+        'Add the part To OutPut string
+        sOut = sOut + pOut
+
+        'Add a new line For Each 76 chars In dest (76*3/4 = 57)
+        'If (I + 2) Mod 57 = 0 Then sOut = sOut + vbCrLf
+        Next
+    Select Case Len(inData) Mod 3
+    Case 1: '8 bit final
+        sOut = Left(sOut, Len(sOut) - 2) + "=="
+    Case 2: '16 bit final
+        sOut = Left(sOut, Len(sOut) - 1) + "="
+    End Select
+    Base64Encode = sOut
 End Function
 
 Class vbsFileUpload
@@ -92,7 +138,7 @@ Class vbsFileUpload
         xmlhttp.setRequestHeader "Accept","text/html, application/xhtml+xml, */*"
         xmlhttp.setRequestHeader "Pragma", "no-cache"
         xmlhttp.setRequestHeader "Content-Type", "multipart/form-data; boundary=" + Boundary
-        xmlhttp.setRequestHeader "Authorization","Basic cm9vdDpyb290"
+        xmlhttp.setRequestHeader "Authorization","Basic " + Base64Encode(UserName + ":" + Passwd)
         xmlhttp.setRequestHeader "DNT", "1"
         xmlhttp.send FormData
         c_strResponseText = xmlhttp.responseText
@@ -169,16 +215,18 @@ End Class
 
 sub Main
     if WScript.Arguments.Count = 0 Then
-        IPAddr = "http://" + "192.168.20.49"
-        PortNo = 80
+        IPAddr   = "http://" + "192.168.20.49"
+        PortNo   = 80
         FileName = "N8072_V1.09_STD-1_20140604-101509.pkg"
         FromPath = "X:\hisi3511\release\"
     else
-        IPAddr = "http://" + Wscript.Arguments.Item(0)
-        PortNo = Wscript.Arguments.Item(1)
-        FromPath = Wscript.Arguments.Item(2)
-        if ( 4=WScript.Arguments.Count ) then
-            FileName = Wscript.Arguments.Item(3)
+        IPAddr   = "http://" + Wscript.Arguments.Item(0)
+        PortNo   = Wscript.Arguments.Item(1)
+        UserName = Wscript.Arguments.Item(2)
+        Passwd   = Wscript.Arguments.Item(3)
+        FromPath = Wscript.Arguments.Item(4)
+        if ( 6=WScript.Arguments.Count ) then
+            FileName = Wscript.Arguments.Item(5)
         else
             FileName = replace(GetLastPKGFile(FromPath),FromPath,"")
         end if

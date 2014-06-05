@@ -22,9 +22,11 @@ REM 3. Run main.bat
 set CurrPath=%~dp0
 set HTTP_IP=192.168.20.49
 set PortNo=80
+set UserName=root
+set Passwd=root
 set ProjPath="X:\hisi3511\release\"
 set FileName="N8072_V1.09_STD-1_20140604-101509.pkg"
 
-start cmd /c "cscript FW_Upgrade.vbs !HTTP_IP! !PortNo! !ProjPath! !FileName!"
-::start cmd /c "cscript FW_Upgrade.vbs !HTTP_IP! !PortNo! !ProjPath!"
+start cmd /c "cscript FW_Upgrade.vbs !HTTP_IP! !PortNo! !UserName! !Passwd! !ProjPath! !FileName!"
+::start cmd /c "cscript FW_Upgrade.vbs !HTTP_IP! !PortNo! !UserName! !Passwd! !ProjPath!"
 
